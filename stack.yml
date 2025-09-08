@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+
+  adapt:
+    image: pedrofariasx/adaptauthoring-docker-arm64:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=rede_interna"
+        - "traefik.http.routers.adapt.rule=Host(`adapt.seudominio.com`)"
+        - "traefik.http.routers.adapt.entrypoints=websecure"
+        - "traefik.http.routers.adapt.tls.certresolver=myresolver"
+        - "traefik.http.services.adapt.loadbalancer.server.port=5000"
+    networks:
+      - rede_interna
+    depends_on:
+      - db
+    env_file: .env
+    volumes:
+      - adaptdata:/adapt_authoring
+
+  db:
+    image: mongo:3.6
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - rede_interna
+    volumes:
+      - adaptdb:/data/db
+
+volumes:
+  adaptdata:
+  adaptdb:
+
+networks:
+  rede_interna:
+    external: true
